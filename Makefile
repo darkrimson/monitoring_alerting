@@ -1,3 +1,6 @@
+include .env
+export
+
 SHELL := /bin/bash
 
 .PHONY: build run migrate test lint help
@@ -12,7 +15,10 @@ run:
 	@echo "setup"
 
 migrate:
-	@echo "migrate (not implemented yet)"
+	@echo "Running database migrations..."
+	@goose -dir migrations postgres \
+		"postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSLMODE)" \
+		up
 
 test:
 	@echo "test (not implemented yet)"
