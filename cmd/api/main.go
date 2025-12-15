@@ -1,19 +1,17 @@
 package main
 
 import (
+	"context"
 	"log"
-	"net/http"
+	"os"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/darkrimson/monitoring_alerting/internal/repository/postgres"
 )
 
 func main() {
-	r := chi.NewRouter()
-
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("OK"))
-	})
-
-	log.Println("API server running on :8080")
-	http.ListenAndServe(":8080", r)
+	pool, err := postgres.NewPool(context.Background(), os.Getenv("DB_URL"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer pool.Close()
 }

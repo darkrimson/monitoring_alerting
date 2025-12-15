@@ -16,9 +16,7 @@ run:
 
 migrate:
 	@echo "Running database migrations..."
-	@goose -dir migrations postgres \
-		"postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSLMODE)" \
-		up
+	@goose -dir migrations postgres "$(DB_URL)" up
 
 test:
 	@echo "test (not implemented yet)"

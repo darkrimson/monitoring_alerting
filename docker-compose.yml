@@ -2,6 +2,8 @@ version: "3.9"
 
 services:
   api:
+    env_file:
+      - .env
     build:
       context: .
       dockerfile: docker/api/Dockerfile
@@ -11,6 +13,8 @@ services:
       - db
 
   worker:
+    env_file:
+      - .env
     build:
       context: .
       dockerfile: docker/worker/Dockerfile
@@ -23,5 +27,6 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
+      DATABASE_URL: ${DB_URL}
     ports:
       - "${DB_PORT}:5432"

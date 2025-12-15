@@ -55,8 +55,7 @@ CREATE TABLE alert_targets (
 CREATE TABLE monitor_alerts (
     monitor_id UUID NOT NULL REFERENCES monitors(id) ON DELETE CASCADE,
     alert_target_id UUID NOT NULL REFERENCES alert_targets(id) ON DELETE CASCADE,
-
-PRIMARY KEY (monitor_id, alert_target_id)
+    PRIMARY KEY (monitor_id, alert_target_id)
 );
 
 -- +goose StatementEnd
