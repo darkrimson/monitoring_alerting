@@ -7,7 +7,7 @@ import (
 )
 
 type Handlers struct {
-	Monitor MonitorHandler // позже конкретизируем
+	Monitor MonitorHandler
 }
 
 func New(h Handlers) http.Handler {
@@ -15,6 +15,16 @@ func New(h Handlers) http.Handler {
 
 	r.Route("/api/v1", func(r chi.Router) {
 		registerMonitors(r, h)
+	})
+
+	return r
+}
+
+func TestRouter() http.Handler {
+	r := chi.NewRouter()
+
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
 	})
 
 	return r

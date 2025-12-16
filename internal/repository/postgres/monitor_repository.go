@@ -28,7 +28,12 @@ func (r *monitorRepo) Create(ctx context.Context, m *models.Monitor) error {
 		`
 	return r.pool.QueryRow(
 		ctx, query,
-		m.Name, m.URL, m.IntervalSeconds, m.Enabled,
+		m.Name,
+		m.URL,
+		m.IntervalSeconds,
+		m.TimeoutSeconds,
+		m.ExpectedStatus,
+		m.Enabled,
 	).Scan(&m.ID, &m.CreatedAt, &m.UpdatedAt)
 }
 

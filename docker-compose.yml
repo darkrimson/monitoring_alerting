@@ -9,6 +9,8 @@ services:
       dockerfile: docker/api/Dockerfile
     ports:
       - "8080:8080"
+    environment:
+      DB_URL: ${DB_URL}
     depends_on:
       - db
 
@@ -18,6 +20,8 @@ services:
     build:
       context: .
       dockerfile: docker/worker/Dockerfile
+    environment:
+      DB_URL: ${DB_URL}
     depends_on:
       - db
 
@@ -30,3 +34,20 @@ services:
       DATABASE_URL: ${DB_URL}
     ports:
       - "${DB_PORT}:5432"
+
+  migrate:
+    image: golang:1.25.3-alpine
+    env_file:
+      - .env
+    working_dir: /app
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    environment:
+      DB_URL: ${DB_URL}
+    entrypoint: >
+      sh -c "
+      go install github.com/pressly/goose/v3/cmd/goose@latest &&
+      goose -dir migrations postgres \"$DB_URL\" up
+      "
