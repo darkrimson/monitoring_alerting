@@ -60,6 +60,8 @@ func (w *Worker) runOnce(ctx context.Context) {
 		return
 	}
 
+	log.Printf("scheduler selected %d monitors\n", len(due))
+
 	for _, m := range due {
 		result := w.httpClient.Check(ctx, m)
 

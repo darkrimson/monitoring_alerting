@@ -1,8 +1,10 @@
 -- +goose Up
 -- +goose StatementBegin
 
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE monitors (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     url TEXT NOT NULL,
 

@@ -28,8 +28,8 @@ func (r *SchedulerRepository) SelectDueMonitors(ctx context.Context, now time.Ti
 			enabled = true
 			AND (
 				last_checked_at IS NULL
-				OR last_checked_at + (interval_seconds || ' seconds')::interval <= $1
-			)
+				OR last_checked_at + (interval_seconds * interval '1 second') <= $1
+			);
 	`
 
 	rows, err := r.pool.Query(ctx, query, now)
@@ -50,6 +50,7 @@ func (r *SchedulerRepository) SelectDueMonitors(ctx context.Context, now time.Ti
 		); err != nil {
 			return nil, err
 		}
+		result = append(result, m)
 	}
 
 	return result, rows.Err()
