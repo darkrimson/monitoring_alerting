@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 
+	"github.com/darkrimson/monitoring_alerting/internal/config"
 	"github.com/darkrimson/monitoring_alerting/internal/models"
 )
 
@@ -17,10 +17,10 @@ type TelegramNotifier struct {
 	client *http.Client
 }
 
-func NewTelegramNotifier() *TelegramNotifier {
+func NewTelegramNotifier(cfg config.TelegramConfig) *TelegramNotifier {
 	return &TelegramNotifier{
-		token:  os.Getenv("TELEGRAM_BOT_TOKEN"),
-		chatID: os.Getenv("TELEGRAM_CHAT_ID"),
+		token:  cfg.Token,
+		chatID: cfg.ChatID,
 		client: &http.Client{},
 	}
 }

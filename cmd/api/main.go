@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"os"
 
+	"github.com/darkrimson/monitoring_alerting/internal/config"
 	"github.com/darkrimson/monitoring_alerting/internal/handler"
 	"github.com/darkrimson/monitoring_alerting/internal/monitor"
 	"github.com/darkrimson/monitoring_alerting/internal/repository/postgres"
@@ -15,13 +15,13 @@ import (
 func main() {
 	ctx := context.Background()
 
-	dbURL := os.Getenv("DB_URL")
-	if dbURL == "" {
+	// --- DB ---
+	dbCfg := config.LoadDB()
+	if dbCfg.DSN == "" {
 		log.Fatal("DB_URL is not set")
 	}
 
-	// --- DB ---
-	pool, err := postgres.NewPool(ctx, dbURL)
+	pool, err := postgres.NewPool(ctx, dbCfg.DSN)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func main() {
 
 	// --- router ---
 	r := router.New(router.Handlers{
-		Monitor: monitorHandler, // 👈 реализация интерфейса router.MonitorHandler
+		Monitor: monitorHandler,
 	})
 
 	log.Println("API listening on :8080")

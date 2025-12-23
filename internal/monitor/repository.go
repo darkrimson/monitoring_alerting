@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type MonitorRepository interface {
+type Repository interface {
 	Create(ctx context.Context, m *models.Monitor) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.Monitor, error)
 	Update(ctx context.Context, m *models.Monitor) error

@@ -14,7 +14,7 @@ type monitorRepo struct {
 	pool *pgxpool.Pool
 }
 
-func NewMonitorRepository(pool *pgxpool.Pool) monitor.MonitorRepository {
+func NewMonitorRepository(pool *pgxpool.Pool) monitor.Repository {
 	return &monitorRepo{pool: pool}
 }
 

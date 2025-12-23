@@ -12,10 +12,10 @@ import (
 )
 
 type MonitorHandler struct {
-	service *monitor.MonitorService
+	service *monitor.Service
 }
 
-func NewMonitorHandler(service *monitor.MonitorService) *MonitorHandler {
+func NewMonitorHandler(service *monitor.Service) *MonitorHandler {
 	return &MonitorHandler{service: service}
 }
 
