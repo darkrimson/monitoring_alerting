@@ -22,7 +22,8 @@ func (r *SchedulerRepository) SelectDueMonitors(ctx context.Context, now time.Ti
 			id,
 			url,
 			timeout_seconds,
-			expected_status
+			expected_status,
+			failure_streak
 		FROM monitors
 		WHERE
 			enabled = true
@@ -47,6 +48,7 @@ func (r *SchedulerRepository) SelectDueMonitors(ctx context.Context, now time.Ti
 			&m.URL,
 			&m.TimeoutSeconds,
 			&m.ExpectedStatusCode,
+			&m.FailureStreak,
 		); err != nil {
 			return nil, err
 		}

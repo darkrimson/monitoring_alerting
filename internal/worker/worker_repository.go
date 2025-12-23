@@ -19,4 +19,7 @@ type MonitorStateRepository interface {
 		status string,
 		checkedAt time.Time,
 	) error
+
+	IncrementFailureStreak(ctx context.Context, monitorID uuid.UUID) error
+	ResetFailureStreak(ctx context.Context, monitorID uuid.UUID) error
 }

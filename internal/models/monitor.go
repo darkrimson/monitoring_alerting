@@ -10,11 +10,12 @@ type Monitor struct {
 	ID              uuid.UUID
 	Name            string
 	URL             string
+	LastStatus      *string
 	IntervalSeconds int
 	TimeoutSeconds  int
 	ExpectedStatus  int
+	FailureStreak   int
 	Enabled         bool
-	LastStatus      *string
 	LastCheckedAt   *time.Time
 	CreatedAt       time.Time
 	UpdatedAt       time.Time

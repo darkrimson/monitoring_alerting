@@ -97,6 +97,12 @@ func (w *Worker) runOnce(ctx context.Context) {
 			log.Println("update status error:", err)
 		}
 
+		if result.Status == "DOWN" {
+			_ = w.stateRepo.IncrementFailureStreak(ctx, result.MonitorID)
+		} else {
+			_ = w.stateRepo.ResetFailureStreak(ctx, result.MonitorID)
+		}
+
 		// INCIDENTS LOGIC
 
 		openIncident, err := w.incidentRepo.GetOpenByMonitor(ctx, result.MonitorID)
@@ -116,7 +122,7 @@ func (w *Worker) runOnce(ctx context.Context) {
 
 		input := incidents.EvaluateInput{
 			HasOpenIncident: openIncident != nil,
-			FailureCount:    0,
+			FailureCount:    m.FailureStreak,
 			CheckStatus:     string(result.Status),
 		}
 
@@ -152,7 +158,10 @@ func (w *Worker) runOnce(ctx context.Context) {
 
 			if err := w.incidentRepo.CreateIncident(ctx, incident); err != nil {
 				log.Println("create incident error:", err)
+				break
 			}
+
+			_ = w.stateRepo.ResetFailureStreak(ctx, result.MonitorID)
 
 			log.Println("INCIDENT CREATED")
 

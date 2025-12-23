@@ -7,4 +7,5 @@ type DueMonitor struct {
 	URL                string
 	TimeoutSeconds     int
 	ExpectedStatusCode int
+	FailureStreak      int
 }

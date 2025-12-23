@@ -41,7 +41,7 @@ func main() {
 	sched := scheduler.NewScheduler(schedulerRepo)
 	httpClient := httpclient.NewClient()
 
-	evaluator := incidents.NewEvaluator(1) // failure threshold
+	evaluator := incidents.NewEvaluator(3) // failure threshold
 	notifier := alerts.NewTelegramNotifier()
 
 	// ---------- worker ----------
