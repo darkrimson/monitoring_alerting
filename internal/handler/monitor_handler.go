@@ -6,16 +6,16 @@ import (
 
 	"github.com/darkrimson/monitoring_alerting/internal/handler/dto"
 	"github.com/darkrimson/monitoring_alerting/internal/models"
-	"github.com/darkrimson/monitoring_alerting/internal/service"
+	"github.com/darkrimson/monitoring_alerting/internal/monitor"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
 type MonitorHandler struct {
-	service *service.MonitorService
+	service *monitor.MonitorService
 }
 
-func NewMonitorHandler(service *service.MonitorService) *MonitorHandler {
+func NewMonitorHandler(service *monitor.MonitorService) *MonitorHandler {
 	return &MonitorHandler{service: service}
 }
 

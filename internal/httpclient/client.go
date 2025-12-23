@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/darkrimson/monitoring_alerting/internal/check"
+	dto2 "github.com/darkrimson/monitoring_alerting/internal/httpclient/dto"
 	"github.com/darkrimson/monitoring_alerting/internal/scheduler/dto"
 )
 
@@ -19,14 +19,14 @@ func NewClient() *Client {
 	}
 }
 
-func (c *Client) Check(ctx context.Context, m dto.DueMonitor) check.Result {
+func (c *Client) Check(ctx context.Context, m dto.DueMonitor) dto2.Result {
 	start := time.Now()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, m.URL, nil)
 	if err != nil {
-		return check.Result{
+		return dto2.Result{
 			MonitorID: m.ID,
-			Status:    check.StatusDown,
+			Status:    dto2.StatusDown,
 			Error:     err.Error(),
 			CheckedAt: time.Now(),
 		}
@@ -39,9 +39,9 @@ func (c *Client) Check(ctx context.Context, m dto.DueMonitor) check.Result {
 	latency := time.Since(start).Milliseconds()
 
 	if err != nil {
-		return check.Result{
+		return dto2.Result{
 			MonitorID: m.ID,
-			Status:    check.StatusDown,
+			Status:    dto2.StatusDown,
 			LatencyMs: int(latency),
 			Error:     err.Error(),
 			CheckedAt: time.Now(),
@@ -49,14 +49,14 @@ func (c *Client) Check(ctx context.Context, m dto.DueMonitor) check.Result {
 	}
 	defer resp.Body.Close()
 
-	status := check.StatusDown
+	status := dto2.StatusDown
 	if resp.StatusCode == m.ExpectedStatusCode {
-		status = check.StatusUp
+		status = dto2.StatusUp
 	}
 
 	code := resp.StatusCode
 
-	return check.Result{
+	return dto2.Result{
 		MonitorID:  m.ID,
 		Status:     status,
 		StatusCode: &code,

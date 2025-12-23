@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/darkrimson/monitoring_alerting/internal/models"
-	"github.com/darkrimson/monitoring_alerting/internal/service"
+	"github.com/darkrimson/monitoring_alerting/internal/monitor"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -14,7 +14,7 @@ type monitorRepo struct {
 	pool *pgxpool.Pool
 }
 
-func NewMonitorRepository(pool *pgxpool.Pool) service.MonitorRepository {
+func NewMonitorRepository(pool *pgxpool.Pool) monitor.MonitorRepository {
 	return &monitorRepo{pool: pool}
 }
 

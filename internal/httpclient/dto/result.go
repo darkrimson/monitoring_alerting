@@ -1,4 +1,4 @@
-package check
+package dto
 
 import (
 	"time"

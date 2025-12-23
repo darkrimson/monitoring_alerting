@@ -3,7 +3,8 @@ package postgres
 import (
 	"context"
 
-	"github.com/darkrimson/monitoring_alerting/internal/check"
+	"github.com/darkrimson/monitoring_alerting/internal/httpclient/dto"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -17,7 +18,11 @@ func NewChecksRepository(pool *pgxpool.Pool) *ChecksRepository {
 	}
 }
 
-func (r *ChecksRepository) Insert(ctx context.Context, result check.Result) error {
+func (r *ChecksRepository) Insert(
+	ctx context.Context,
+	result dto.Result,
+) (uuid.UUID, error) {
+
 	const query = `
 		INSERT INTO checks (
 			monitor_id,
@@ -28,8 +33,12 @@ func (r *ChecksRepository) Insert(ctx context.Context, result check.Result) erro
 			error
 		)
 		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id
 	`
-	_, err := r.pool.Exec(
+
+	var checkID uuid.UUID
+
+	err := r.pool.QueryRow(
 		ctx,
 		query,
 		result.MonitorID,
@@ -38,9 +47,9 @@ func (r *ChecksRepository) Insert(ctx context.Context, result check.Result) erro
 		result.StatusCode,
 		result.LatencyMs,
 		nullIfEmpty(result.Error),
-	)
+	).Scan(&checkID)
 
-	return err
+	return checkID, err
 }
 
 func nullIfEmpty(s string) *string {

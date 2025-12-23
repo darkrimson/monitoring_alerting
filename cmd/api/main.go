@@ -7,9 +7,9 @@ import (
 	"os"
 
 	"github.com/darkrimson/monitoring_alerting/internal/handler"
+	"github.com/darkrimson/monitoring_alerting/internal/monitor"
 	"github.com/darkrimson/monitoring_alerting/internal/repository/postgres"
 	"github.com/darkrimson/monitoring_alerting/internal/router"
-	"github.com/darkrimson/monitoring_alerting/internal/service"
 )
 
 func main() {
@@ -31,7 +31,7 @@ func main() {
 	monitorRepo := postgres.NewMonitorRepository(pool)
 
 	// --- services ---
-	monitorService := service.NewMonitorService(monitorRepo)
+	monitorService := monitor.NewMonitorService(monitorRepo)
 
 	// --- handlers ---
 	monitorHandler := handler.NewMonitorHandler(monitorService)

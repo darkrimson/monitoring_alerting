@@ -7,12 +7,13 @@ import (
 )
 
 type Incident struct {
-	ID uuid.UUID
-
-	MonitorID uuid.UUID
-
-	StartedAt  time.Time
-	ResolvedAt *time.Time
-
-	CurrentStatus string // OPEN / RESOLVED
+	ID           uuid.UUID
+	MonitorID    uuid.UUID
+	Status       string // OPEN / RESOLVED
+	StartedAt    time.Time
+	ResolvedAt   *time.Time
+	FailureCount int
+	LastCheckID  *uuid.UUID
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }

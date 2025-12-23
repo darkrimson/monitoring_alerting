@@ -7,20 +7,15 @@ import (
 )
 
 type Monitor struct {
-	ID uuid.UUID
-
-	Name string
-	URL  string
-
+	ID              uuid.UUID
+	Name            string
+	URL             string
 	IntervalSeconds int
 	TimeoutSeconds  int
 	ExpectedStatus  int
-
-	Enabled bool
-
-	LastStatus    *string
-	LastCheckedAt *time.Time
-
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Enabled         bool
+	LastStatus      *string
+	LastCheckedAt   *time.Time
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
