@@ -13,18 +13,12 @@ type Handlers struct {
 func New(h Handlers) http.Handler {
 	r := chi.NewRouter()
 
-	r.Route("/api/v1", func(r chi.Router) {
-		registerMonitors(r, h)
+	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
+		w.Write([]byte("OK"))
 	})
 
-	return r
-}
-
-func TestRouter() http.Handler {
-	r := chi.NewRouter()
-
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("ok"))
+	r.Route("/api/v1", func(r chi.Router) {
+		registerMonitors(r, h)
 	})
 
 	return r
