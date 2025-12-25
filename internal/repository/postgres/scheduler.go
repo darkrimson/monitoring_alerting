@@ -16,8 +16,8 @@ func NewSchedulerRepository(pool *pgxpool.Pool) *SchedulerRepository {
 	return &SchedulerRepository{pool: pool}
 }
 
-func (r *SchedulerRepository) SelectDueMonitors(ctx context.Context, now time.Time) ([]dto.DueMonitor, error) {
-	const query = `
+const (
+	selectDueMonitorsQuery = `
 		SELECT
 			id,
 			url,
@@ -32,8 +32,11 @@ func (r *SchedulerRepository) SelectDueMonitors(ctx context.Context, now time.Ti
 				OR last_checked_at + (interval_seconds * interval '1 second') <= $1
 			);
 	`
+)
 
-	rows, err := r.pool.Query(ctx, query, now)
+func (r *SchedulerRepository) SelectDueMonitors(ctx context.Context, now time.Time) ([]dto.DueMonitor, error) {
+
+	rows, err := r.pool.Query(ctx, selectDueMonitorsQuery, now)
 	if err != nil {
 		return nil, err
 	}

@@ -19,14 +19,8 @@ func NewMonitorStateRepository(pool *pgxpool.Pool) *MonitorStateRepository {
 	}
 }
 
-func (r *MonitorStateRepository) UpdateStatus(
-	ctx context.Context,
-	monitorID uuid.UUID,
-	status string,
-	checkedAt time.Time,
-) error {
-
-	const query = `
+const (
+	updateStatusQuery = `
 		UPDATE monitors
 		SET
 			last_status = $2,
@@ -34,9 +28,33 @@ func (r *MonitorStateRepository) UpdateStatus(
 		WHERE id = $1
 	`
 
+	incrementFailureStreakQuery = `
+		UPDATE monitors
+		SET
+			failure_streak = failure_streak + 1,
+			updated_at = now()
+		WHERE id = $1
+	`
+
+	resetFailureStreakQuery = `
+		UPDATE monitors
+		SET
+			failure_streak = 0,
+			updated_at = now()
+		WHERE id = $1
+	`
+)
+
+func (r *MonitorStateRepository) UpdateStatus(
+	ctx context.Context,
+	monitorID uuid.UUID,
+	status string,
+	checkedAt time.Time,
+) error {
+
 	cmd, err := r.pool.Exec(
 		ctx,
-		query,
+		updateStatusQuery,
 		monitorID,
 		status,
 		checkedAt,
@@ -58,15 +76,7 @@ func (r *MonitorStateRepository) IncrementFailureStreak(
 	monitorID uuid.UUID,
 ) error {
 
-	const query = `
-		UPDATE monitors
-		SET
-			failure_streak = failure_streak + 1,
-			updated_at = now()
-		WHERE id = $1
-	`
-
-	_, err := r.pool.Exec(ctx, query, monitorID)
+	_, err := r.pool.Exec(ctx, incrementFailureStreakQuery, monitorID)
 	return err
 }
 
@@ -75,14 +85,6 @@ func (r *MonitorStateRepository) ResetFailureStreak(
 	monitorID uuid.UUID,
 ) error {
 
-	const query = `
-		UPDATE monitors
-		SET
-			failure_streak = 0,
-			updated_at = now()
-		WHERE id = $1
-	`
-
-	_, err := r.pool.Exec(ctx, query, monitorID)
+	_, err := r.pool.Exec(ctx, resetFailureStreakQuery, monitorID)
 	return err
 }

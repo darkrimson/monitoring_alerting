@@ -18,27 +18,16 @@ func NewMonitorRepository(pool *pgxpool.Pool) monitor.Repository {
 	return &monitorRepo{pool: pool}
 }
 
-func (r *monitorRepo) Create(ctx context.Context, m *models.Monitor) error {
-	const query = `
+const (
+	insertMonitorQuery = `
 		INSERT INTO monitors (
 		    name, url, interval_seconds, timeout_seconds, expected_status, enabled
 		)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id, created_at, updated_at
 		`
-	return r.pool.QueryRow(
-		ctx, query,
-		m.Name,
-		m.URL,
-		m.IntervalSeconds,
-		m.TimeoutSeconds,
-		m.ExpectedStatus,
-		m.Enabled,
-	).Scan(&m.ID, &m.CreatedAt, &m.UpdatedAt)
-}
 
-func (r *monitorRepo) GetByID(ctx context.Context, id uuid.UUID) (*models.Monitor, error) {
-	const query = `
+	selectMonitorByIDQuery = `
 		SELECT
 			id, name, url,
 			interval_seconds, timeout_seconds, 
@@ -49,9 +38,53 @@ func (r *monitorRepo) GetByID(ctx context.Context, id uuid.UUID) (*models.Monito
 		WHERE id = $1
 	`
 
+	selectMonitorListQuery = `
+		SELECT
+			id, name, url,
+			interval_seconds, timeout_seconds,
+			expected_status, enabled,
+			last_status, last_checked_at,
+			created_at, updated_at
+		FROM monitors
+		ORDER BY created_at DESC
+	`
+
+	updateMonitorQuery = `
+		UPDATE monitors
+		SET
+			name = $2,
+			url = $3,
+			interval_seconds = $4,
+			timeout_seconds = $5,
+			expected_status = $6,
+			enabled = $7,
+			updated_at = now()
+		WHERE id = $1 
+		`
+
+	deleteMonitorQuery = `
+		DELETE FROM monitors
+		WHERE id = $1
+	`
+)
+
+func (r *monitorRepo) Create(ctx context.Context, m *models.Monitor) error {
+	return r.pool.QueryRow(
+		ctx, insertMonitorQuery,
+		m.Name,
+		m.URL,
+		m.IntervalSeconds,
+		m.TimeoutSeconds,
+		m.ExpectedStatus,
+		m.Enabled,
+	).Scan(&m.ID, &m.CreatedAt, &m.UpdatedAt)
+}
+
+func (r *monitorRepo) GetByID(ctx context.Context, id uuid.UUID) (*models.Monitor, error) {
+
 	var m models.Monitor
 
-	err := r.pool.QueryRow(ctx, query, id).Scan(
+	err := r.pool.QueryRow(ctx, selectMonitorByIDQuery, id).Scan(
 		&m.ID,
 		&m.Name,
 		&m.URL,
@@ -73,18 +106,8 @@ func (r *monitorRepo) GetByID(ctx context.Context, id uuid.UUID) (*models.Monito
 }
 
 func (r *monitorRepo) List(ctx context.Context) ([]models.Monitor, error) {
-	const query = `
-		SELECT
-			id, name, url,
-			interval_seconds, timeout_seconds,
-			expected_status, enabled,
-			last_status, last_checked_at,
-			created_at, updated_at
-		FROM monitors
-		ORDER BY created_at DESC
-	`
 
-	rows, err := r.pool.Query(ctx, query)
+	rows, err := r.pool.Query(ctx, selectMonitorListQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -115,20 +138,8 @@ func (r *monitorRepo) List(ctx context.Context) ([]models.Monitor, error) {
 }
 
 func (r *monitorRepo) Update(ctx context.Context, m *models.Monitor) error {
-	const query = `
-		UPDATE monitors
-		SET
-			name = $2,
-			url = $3,
-			interval_seconds = $4,
-			timeout_seconds = $5,
-			expected_status = $6,
-			enabled = $7,
-			updated_at = now()
-		WHERE id = $1 
-		`
 
-	cmd, err := r.pool.Exec(ctx, query,
+	cmd, err := r.pool.Exec(ctx, updateMonitorQuery,
 		m.ID,
 		m.Name,
 		m.URL,
@@ -150,12 +161,8 @@ func (r *monitorRepo) Update(ctx context.Context, m *models.Monitor) error {
 }
 
 func (r *monitorRepo) Delete(ctx context.Context, id uuid.UUID) error {
-	const query = `
-		DELETE FROM monitors
-		WHERE id = $1
-	`
 
-	cmd, err := r.pool.Exec(ctx, query, id)
+	cmd, err := r.pool.Exec(ctx, deleteMonitorQuery, id)
 	if err != nil {
 		return err
 	}

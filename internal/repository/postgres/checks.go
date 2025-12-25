@@ -18,12 +18,8 @@ func NewChecksRepository(pool *pgxpool.Pool) *ChecksRepository {
 	}
 }
 
-func (r *ChecksRepository) Insert(
-	ctx context.Context,
-	result dto.Result,
-) (uuid.UUID, error) {
-
-	const query = `
+const (
+	insertChecksQuery = `
 		INSERT INTO checks (
 			monitor_id,
 			ts,
@@ -35,12 +31,18 @@ func (r *ChecksRepository) Insert(
 		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id
 	`
+)
+
+func (r *ChecksRepository) Insert(
+	ctx context.Context,
+	result dto.Result,
+) (uuid.UUID, error) {
 
 	var checkID uuid.UUID
 
 	err := r.pool.QueryRow(
 		ctx,
-		query,
+		insertChecksQuery,
 		result.MonitorID,
 		result.CheckedAt,
 		result.Status,

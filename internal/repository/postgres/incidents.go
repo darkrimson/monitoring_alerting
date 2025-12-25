@@ -19,12 +19,8 @@ func NewIncidentRepository(pool *pgxpool.Pool) *IncidentRepository {
 	return &IncidentRepository{pool: pool}
 }
 
-func (r *IncidentRepository) GetOpenByMonitor(
-	ctx context.Context,
-	monitorID uuid.UUID,
-) (*models.Incident, error) {
-
-	const query = `
+const (
+	selectOpenIncidentByMonitorQuery = `
 		SELECT
 			id,
 			monitor_id,
@@ -40,9 +36,45 @@ func (r *IncidentRepository) GetOpenByMonitor(
 		LIMIT 1;
 	`
 
+	insertIncidentQuery = `
+		INSERT INTO incidents (
+			id,
+			monitor_id,
+			status,
+			started_at,
+			failure_count,
+			last_check_id
+		)
+		VALUES ($1, $2, 'OPEN', $3, $4, $5);
+	`
+	updateIncidentFailureQuery = `
+		UPDATE incidents
+		SET
+			failure_count = failure_count + 1,
+			last_check_id = $2,
+			updated_at = now()
+		WHERE id = $1 AND status = 'OPEN';
+	`
+
+	resolveIncidentQuery = `
+		UPDATE incidents
+		SET
+			status = 'RESOLVED',
+			resolved_at = $2,
+			last_check_id = $3,
+			updated_at = now()
+		WHERE id = $1 AND status = 'OPEN';
+	`
+)
+
+func (r *IncidentRepository) GetOpenByMonitor(
+	ctx context.Context,
+	monitorID uuid.UUID,
+) (*models.Incident, error) {
+
 	var inc models.Incident
 
-	err := r.pool.QueryRow(ctx, query, monitorID).Scan(
+	err := r.pool.QueryRow(ctx, selectOpenIncidentByMonitorQuery, monitorID).Scan(
 		&inc.ID,
 		&inc.MonitorID,
 		&inc.Status,
@@ -69,21 +101,9 @@ func (r *IncidentRepository) CreateIncident(
 	incident *models.Incident,
 ) error {
 
-	const query = `
-		INSERT INTO incidents (
-			id,
-			monitor_id,
-			status,
-			started_at,
-			failure_count,
-			last_check_id
-		)
-		VALUES ($1, $2, 'OPEN', $3, $4, $5);
-	`
-
 	_, err := r.pool.Exec(
 		ctx,
-		query,
+		insertIncidentQuery,
 		incident.ID,
 		incident.MonitorID,
 		incident.StartedAt,
@@ -100,16 +120,7 @@ func (r *IncidentRepository) UpdateFailure(
 	lastCheckID uuid.UUID,
 ) error {
 
-	const query = `
-		UPDATE incidents
-		SET
-			failure_count = failure_count + 1,
-			last_check_id = $2,
-			updated_at = now()
-		WHERE id = $1 AND status = 'OPEN';
-	`
-
-	cmd, err := r.pool.Exec(ctx, query, incidentID, lastCheckID)
+	cmd, err := r.pool.Exec(ctx, updateIncidentFailureQuery, incidentID, lastCheckID)
 	if err != nil {
 		return err
 	}
@@ -128,19 +139,9 @@ func (r *IncidentRepository) ResolveIncident(
 	resolvedAt time.Time,
 ) error {
 
-	const query = `
-		UPDATE incidents
-		SET
-			status = 'RESOLVED',
-			resolved_at = $2,
-			last_check_id = $3,
-			updated_at = now()
-		WHERE id = $1 AND status = 'OPEN';
-	`
-
 	cmd, err := r.pool.Exec(
 		ctx,
-		query,
+		resolveIncidentQuery,
 		incidentID,
 		resolvedAt,
 		lastCheckID,

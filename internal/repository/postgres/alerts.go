@@ -17,12 +17,8 @@ func NewAlertRepository(pool *pgxpool.Pool) *AlertRepository {
 	return &AlertRepository{pool: pool}
 }
 
-func (r *AlertRepository) Create(
-	ctx context.Context,
-	alert *models.Alert,
-) error {
-
-	const query = `
+const (
+	insertAlertQuery = `
 		INSERT INTO alerts (
 			id,
 			incident_id,
@@ -32,10 +28,35 @@ func (r *AlertRepository) Create(
 		)
 		VALUES ($1, $2, $3, $4, $5)
 	`
+	selectPendingAlertsQuery = `
+		SELECT
+			id,
+			incident_id,
+			type,
+			channel,
+			payload,
+			sent_at,
+			created_at
+		FROM alerts
+		WHERE sent_at IS NULL
+		ORDER BY created_at
+	`
+
+	markAlertSentQuery = `
+		UPDATE alerts
+		SET sent_at = now()
+		WHERE id = $1 AND sent_at IS NULL
+	`
+)
+
+func (r *AlertRepository) Create(
+	ctx context.Context,
+	alert *models.Alert,
+) error {
 
 	_, err := r.pool.Exec(
 		ctx,
-		query,
+		insertAlertQuery,
 		alert.ID,
 		alert.IncidentID,
 		alert.Type,
@@ -50,21 +71,7 @@ func (r *AlertRepository) GetPending(
 	ctx context.Context,
 ) ([]models.Alert, error) {
 
-	const query = `
-		SELECT
-			id,
-			incident_id,
-			type,
-			channel,
-			payload,
-			sent_at,
-			created_at
-		FROM alerts
-		WHERE sent_at IS NULL
-		ORDER BY created_at
-	`
-
-	rows, err := r.pool.Query(ctx, query)
+	rows, err := r.pool.Query(ctx, selectPendingAlertsQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -96,13 +103,7 @@ func (r *AlertRepository) MarkSent(
 	alertID uuid.UUID,
 ) error {
 
-	const query = `
-		UPDATE alerts
-		SET sent_at = now()
-		WHERE id = $1 AND sent_at IS NULL
-	`
-
-	cmd, err := r.pool.Exec(ctx, query, alertID)
+	cmd, err := r.pool.Exec(ctx, markAlertSentQuery, alertID)
 	if err != nil {
 		return err
 	}
