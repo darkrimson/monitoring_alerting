@@ -40,8 +40,10 @@ func (h *MonitorHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	resp := dto.MonitorToResponse(monitor)
+
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(monitor)
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *MonitorHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -51,8 +53,13 @@ func (h *MonitorHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	resp := make([]dto.MonitorResponse, 0, len(monitors))
+	for i := range monitors {
+		resp = append(resp, dto.MonitorToResponse(&monitors[i]))
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(monitors)
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *MonitorHandler) GetByID(w http.ResponseWriter, r *http.Request) {
@@ -70,8 +77,10 @@ func (h *MonitorHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	resp := dto.MonitorToResponse(monitor)
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(monitor)
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *MonitorHandler) Update(w http.ResponseWriter, r *http.Request) {
