@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/darkrimson/monitoring_alerting/internal/alerts"
@@ -15,7 +18,17 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-sigCh
+		log.Println("worker shutting down")
+		cancel()
+	}()
 
 	// ---------- DB ----------
 	dbCfg := config.LoadDB()

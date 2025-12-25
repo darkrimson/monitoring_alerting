@@ -4,6 +4,10 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/darkrimson/monitoring_alerting/internal/config"
 	"github.com/darkrimson/monitoring_alerting/internal/handler"
@@ -13,7 +17,8 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	// --- DB ---
 	dbCfg := config.LoadDB()
@@ -41,6 +46,28 @@ func main() {
 		Monitor: monitorHandler,
 	})
 
-	log.Println("API listening on :8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	srv := &http.Server{
+		Addr:         ":8080",
+		Handler:      r,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+
+	go func() {
+		log.Println("starting server on :8080")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	<-sigChan
+
+	log.Println("shutting down server")
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("could not shutdown server gracefully: %v", err)
+	}
 }
