@@ -88,31 +88,20 @@ func (w *Worker) runOnce(ctx context.Context) {
 			continue
 		}
 
-		if err := w.stateRepo.UpdateStatus(
-			ctx,
-			result.MonitorID,
-			string(result.Status),
-			result.CheckedAt,
-		); err != nil {
-			log.Println("update status error:", err)
-		}
-
-		if result.Status == "DOWN" {
-			_ = w.stateRepo.IncrementFailureStreak(ctx, result.MonitorID)
-		} else {
-			_ = w.stateRepo.ResetFailureStreak(ctx, result.MonitorID)
-		}
-
-		// INCIDENTS LOGIC
-
 		openIncident, err := w.incidentRepo.GetOpenByMonitor(ctx, result.MonitorID)
 		if err != nil {
 			log.Println("get open incident error:", err)
 			continue
 		}
 
-		if openIncident == nil {
-			log.Println("NO OPEN INCIDENT")
+		if err := w.stateRepo.UpdateStatus(
+			ctx,
+			result.MonitorID,
+			string(result.Status),
+			result.CheckedAt,
+			openIncident != nil,
+		); err != nil {
+			log.Println("update status error:", err)
 		}
 
 		input := incidents.EvaluateInput{

@@ -20,11 +20,19 @@ func NewMonitorStateRepository(pool *pgxpool.Pool) *MonitorStateRepository {
 }
 
 const (
-	updateStatusQuery = `
+	updateMonitorStateQuery = `
 		UPDATE monitors
 		SET
 			last_status = $2,
-			last_checked_at = $3
+			last_checked_at = $3,
+			failure_streak =
+				CASE
+					WHEN $2 = 'DOWN' AND $4 = false
+						THEN failure_streak + 1
+					WHEN $2 = 'UP'
+						THEN 0
+					ELSE failure_streak
+				END
 		WHERE id = $1
 	`
 
@@ -50,14 +58,16 @@ func (r *MonitorStateRepository) UpdateStatus(
 	monitorID uuid.UUID,
 	status string,
 	checkedAt time.Time,
+	hasOpenIncident bool,
 ) error {
 
 	cmd, err := r.pool.Exec(
 		ctx,
-		updateStatusQuery,
+		updateMonitorStateQuery,
 		monitorID,
 		status,
 		checkedAt,
+		hasOpenIncident,
 	)
 
 	if err != nil {

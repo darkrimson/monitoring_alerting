@@ -18,6 +18,7 @@ type MonitorStateRepository interface {
 		monitorID uuid.UUID,
 		status string,
 		checkedAt time.Time,
+		hasOpenIncident bool,
 	) error
 
 	IncrementFailureStreak(ctx context.Context, monitorID uuid.UUID) error
