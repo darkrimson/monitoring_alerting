@@ -113,11 +113,6 @@ func (w *Worker) runOnce(ctx context.Context) {
 
 		if openIncident == nil {
 			log.Println("NO OPEN INCIDENT")
-		} else {
-			log.Printf("OPEN INCIDENT id=%s failures=%d",
-				openIncident.ID,
-				openIncident.FailureCount,
-			)
 		}
 
 		input := incidents.EvaluateInput{
@@ -130,15 +125,20 @@ func (w *Worker) runOnce(ctx context.Context) {
 			input.FailureCount = openIncident.FailureCount
 		}
 
-		decision := w.evaluator.Evaluate(input)
+		currentFailures := input.FailureCount
+		if result.Status == "DOWN" {
+			currentFailures++
+		}
 
 		log.Printf(
 			"EVAL monitor=%s status=%s hasOpen=%v failures=%d",
 			result.MonitorID,
 			result.Status,
-			input.HasOpenIncident,
-			input.FailureCount,
+			openIncident != nil,
+			currentFailures,
 		)
+
+		decision := w.evaluator.Evaluate(input)
 
 		switch decision.Type {
 
@@ -154,16 +154,18 @@ func (w *Worker) runOnce(ctx context.Context) {
 				LastCheckID:  &checkID,
 			}
 
-			log.Println("TRY CREATE INCIDENT")
-
 			if err := w.incidentRepo.CreateIncident(ctx, incident); err != nil {
 				log.Println("create incident error:", err)
 				break
 			}
 
-			_ = w.stateRepo.ResetFailureStreak(ctx, result.MonitorID)
+			log.Printf(
+				"OPEN INCIDENT id=%s failures=%d",
+				incident.ID,
+				currentFailures,
+			)
 
-			log.Println("INCIDENT CREATED")
+			_ = w.stateRepo.ResetFailureStreak(ctx, result.MonitorID)
 
 			alert := &models.Alert{
 				ID:         uuid.New(),
@@ -190,6 +192,12 @@ func (w *Worker) runOnce(ctx context.Context) {
 				log.Println("update incident error:", err)
 			}
 
+			log.Printf(
+				"UPDATE INCIDENT id=%s failures=%d",
+				openIncident.ID,
+				currentFailures,
+			)
+
 		case incidents.DecisionResolve:
 			if openIncident == nil {
 				break
@@ -204,6 +212,11 @@ func (w *Worker) runOnce(ctx context.Context) {
 				log.Println("resolve incident error:", err)
 				break
 			}
+
+			log.Printf(
+				"RESOLVE INCIDENT id=%s",
+				openIncident.ID,
+			)
 
 			alert := &models.Alert{
 				ID:         uuid.New(),
