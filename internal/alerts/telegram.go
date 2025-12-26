@@ -25,6 +25,11 @@ func NewTelegramNotifier(cfg config.TelegramConfig) *TelegramNotifier {
 	}
 }
 
+const (
+	incidentOpened   = "INCIDENT_OPENED"
+	incidentResolved = "INCIDENT_RESOLVED"
+)
+
 func (t *TelegramNotifier) Send(
 	ctx context.Context,
 	alert models.Alert,
@@ -60,7 +65,7 @@ func (t *TelegramNotifier) Send(
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 300 {
+	if resp.StatusCode >= http.StatusMultipleChoices {
 		return fmt.Errorf("telegram send failed: %s", resp.Status)
 	}
 
@@ -73,10 +78,10 @@ func (t *TelegramNotifier) formatMessage(
 
 	switch alert.Type {
 
-	case "INCIDENT_OPENED":
+	case incidentOpened:
 		return "🚨 INCIDENT OPENED\n\n" + string(alert.Payload)
 
-	case "INCIDENT_RESOLVED":
+	case incidentResolved:
 		return "✅ INCIDENT RESOLVED\n\n" + string(alert.Payload)
 
 	default:

@@ -17,16 +17,21 @@ type EvaluateInput struct {
 	CheckStatus string // UP / DOWN
 }
 
+const (
+	up   = "UP"
+	down = "DOWN"
+)
+
 func (e *Evaluator) Evaluate(input EvaluateInput) Decision {
 	switch input.CheckStatus {
 
-	case "UP":
+	case up:
 		if input.HasOpenIncident {
 			return Decision{Type: DecisionResolve}
 		}
 		return Decision{Type: DecisionNoop}
 
-	case "DOWN":
+	case down:
 		if input.HasOpenIncident {
 			return Decision{Type: DecisionUpdate}
 		}

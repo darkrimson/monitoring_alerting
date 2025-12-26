@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	dto2 "github.com/darkrimson/monitoring_alerting/internal/httpclient/dto"
-	"github.com/darkrimson/monitoring_alerting/internal/scheduler/dto"
+	"github.com/darkrimson/monitoring_alerting/internal/httpclient/dto"
+	dtoDueMonitor "github.com/darkrimson/monitoring_alerting/internal/scheduler/dto"
 )
 
 type Client struct {
@@ -19,48 +19,28 @@ func NewClient() *Client {
 	}
 }
 
-func (c *Client) Check(ctx context.Context, m dto.DueMonitor) dto2.Result {
+func (c *Client) Check(ctx context.Context, m dtoDueMonitor.DueMonitor) dto.Result {
 	start := time.Now()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, m.URL, nil)
 	if err != nil {
-		return dto2.Result{
-			MonitorID: m.ID,
-			Status:    dto2.StatusDown,
-			Error:     err.Error(),
-			CheckedAt: time.Now(),
-		}
+		return newErrorResult(m, err)
 	}
 
 	client := *c.httpClient
 	client.Timeout = time.Duration(m.TimeoutSeconds) * time.Second
 
 	resp, err := client.Do(req)
-	latency := time.Since(start).Milliseconds()
-
 	if err != nil {
-		return dto2.Result{
-			MonitorID: m.ID,
-			Status:    dto2.StatusDown,
-			LatencyMs: int(latency),
-			Error:     err.Error(),
-			CheckedAt: time.Now(),
-		}
+		return newErrorResult(m, err)
 	}
 	defer resp.Body.Close()
 
-	status := dto2.StatusDown
-	if resp.StatusCode == m.ExpectedStatusCode {
-		status = dto2.StatusUp
+	latency := time.Since(start)
+
+	if resp.StatusCode != m.ExpectedStatusCode {
+		return newFailureResult(m, resp.StatusCode, latency)
 	}
 
-	code := resp.StatusCode
-
-	return dto2.Result{
-		MonitorID:  m.ID,
-		Status:     status,
-		StatusCode: &code,
-		LatencyMs:  int(latency),
-		CheckedAt:  time.Now(),
-	}
+	return newSuccessResult(m, resp.StatusCode, latency)
 }
