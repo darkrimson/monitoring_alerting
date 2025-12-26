@@ -27,5 +27,5 @@ type Repository interface {
 		incidentID uuid.UUID,
 		lastCheckID uuid.UUID,
 		resolvedAt time.Time,
-	) error
+	) (*models.Incident, error)
 }

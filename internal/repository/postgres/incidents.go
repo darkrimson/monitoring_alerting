@@ -63,7 +63,14 @@ const (
 			resolved_at = $2,
 			last_check_id = $3,
 			updated_at = now()
-		WHERE id = $1 AND status = 'OPEN';
+		WHERE id = $1
+		RETURNING
+			id,
+			monitor_id,
+			status,
+			started_at,
+			resolved_at,
+			failure_count
 	`
 )
 
@@ -137,22 +144,31 @@ func (r *IncidentRepository) ResolveIncident(
 	incidentID uuid.UUID,
 	lastCheckID uuid.UUID,
 	resolvedAt time.Time,
-) error {
+) (*models.Incident, error) {
 
-	cmd, err := r.pool.Exec(
+	var incident models.Incident
+
+	err := r.pool.QueryRow(
 		ctx,
 		resolveIncidentQuery,
 		incidentID,
 		resolvedAt,
 		lastCheckID,
+	).Scan(
+		&incident.ID,
+		&incident.MonitorID,
+		&incident.Status,
+		&incident.StartedAt,
+		&incident.ResolvedAt,
+		&incident.FailureCount,
 	)
+
 	if err != nil {
-		return err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, pgx.ErrNoRows
+		}
+		return nil, err
 	}
 
-	if cmd.RowsAffected() == 0 {
-		return pgx.ErrNoRows
-	}
-
-	return nil
+	return &incident, nil
 }

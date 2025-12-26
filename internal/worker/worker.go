@@ -192,27 +192,28 @@ func (w *Worker) runOnce(ctx context.Context) {
 				break
 			}
 
-			if err := w.incidentRepo.ResolveIncident(
+			resolvedIncident, err := w.incidentRepo.ResolveIncident(
 				ctx,
 				openIncident.ID,
 				checkID,
 				result.CheckedAt,
-			); err != nil {
+			)
+			if err != nil {
 				log.Println("resolve incident error:", err)
 				break
 			}
 
 			log.Printf(
 				"RESOLVE INCIDENT id=%s",
-				openIncident.ID,
+				resolvedIncident.ID,
 			)
 
 			alert := &models.Alert{
 				ID:         uuid.New(),
-				IncidentID: openIncident.ID,
+				IncidentID: resolvedIncident.ID,
 				Type:       "INCIDENT_RESOLVED",
 				Channel:    "TELEGRAM",
-				Payload:    alerts.BuildIncidentPayload(openIncident),
+				Payload:    alerts.BuildIncidentPayload(resolvedIncident),
 			}
 
 			if err := w.alertRepo.Create(ctx, alert); err != nil {
